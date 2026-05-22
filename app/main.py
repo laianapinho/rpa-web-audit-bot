@@ -1,6 +1,8 @@
 import pandas as pd
+
 from app.config import INPUT_FILE
 from app.logger_config import configurar_logger
+from app.excel_reader import carregar_dados_entrada
 
 
 logger = configurar_logger()
@@ -22,7 +24,14 @@ def criar_planilha_entrada():
 
 def main():
     logger.info("Iniciando o projeto RPA Web Audit Bot.")
+
     criar_planilha_entrada()
+
+    df = carregar_dados_entrada()
+
+    print("\nDados carregados da planilha:")
+    print(df)
+
     logger.info("Execução finalizada.")
 
 
