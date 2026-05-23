@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sistema de Consulta - RPA Web Audit Bot</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 500px;
+            margin: 80px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            text-align: center;
+            color: #222222;
+            margin-bottom: 10px;
+        }
+
+        p {
+            text-align: center;
+            color: #555555;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333333;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .resultado {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f9fafb;
+            border: 1px solid #dddddd;
+            border-radius: 8px;
+        }
+
+        .resultado p {
+            text-align: left;
+            margin: 8px 0;
+            color: #222222;
+        }
+
+        .erro {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .sucesso {
+            color: #16a34a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Consulta de Registro</h1>
+
+        <p>Sistema web de teste para automação RPA</p>
+
+        <label for="codigo">Código do registro</label>
+
+        <input type="text" id="codigo" placeholder="Digite o código. Ex: 001">
+
+        <button onclick="consultarRegistro()">Consultar</button>
+
+        <div class="resultado">
+            <p><strong>Nome:</strong> <span id="nome">-</span></p>
+            <p><strong>Status:</strong> <span id="status">-</span></p>
+            <p id="mensagem"></p>
+        </div>
+    </div>
+
+    <script>
+        const registros = {
+            "001": {
+                nome: "Ana Silva",
+                status: "Ativo"
+            },
+            "002": {
+                nome: "João Souza",
+                status: "Inativo"
+            },
+            "003": {
+                nome: "Maria Lima",
+                status: "Ativo"
+            },
+            "004": {
+                nome: "Carlos Santos",
+                status: "Pendente"
+            },
+
+            "005": {
+                nome: "Fernanda Rocha",
+                status: "Ativo"
+            }
+        };
+
+        function consultarRegistro() {
+            const codigo = document.getElementById("codigo").value.trim();
+
+            const campoNome = document.getElementById("nome");
+            const campoStatus = document.getElementById("status");
+            const campoMensagem = document.getElementById("mensagem");
+
+            if (codigo === "") {
+                campoNome.textContent = "-";
+                campoStatus.textContent = "-";
+                campoMensagem.textContent = "Digite um código para consultar.";
+                campoMensagem.className = "erro";
+                return;
+            }
+
+            if (registros[codigo]) {
+                campoNome.textContent = registros[codigo].nome;
+                campoStatus.textContent = registros[codigo].status;
+                campoMensagem.textContent = "Registro encontrado com sucesso.";
+                campoMensagem.className = "sucesso";
+            } else {
+                campoNome.textContent = "-";
+                campoStatus.textContent = "-";
+                campoMensagem.textContent = "Registro não encontrado.";
+                campoMensagem.className = "erro";
+            }
+        }
+    </script>
+
+</body>
+</html>
