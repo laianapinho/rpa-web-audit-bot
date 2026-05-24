@@ -1,25 +1,29 @@
+# Importa o time, usado para pequenas pausas durante a automação.
 import time
+
+# Importa o webdriver do Selenium.
+# Ele permite controlar o navegador automaticamente.
 from selenium import webdriver
 
 # Importa By, usado para localizar elementos na página.
-# Exemplo: localizar por ID, classe, nome, seletor CSS etc.
+# Exemplo: By.ID, By.CSS_SELECTOR, By.NAME.
 from selenium.webdriver.common.by import By
 
 # Importa Service, usado para configurar o serviço do ChromeDriver.
 from selenium.webdriver.chrome.service import Service
 
 # Importa ChromeDriverManager.
-# Ele baixa e configura automaticamente o ChromeDriver correto.
+# Ele baixa ou encontra automaticamente o ChromeDriver compatível com seu Chrome.
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Importa a URL da página local criada no arquivo config.py.
+# Importa a URL local da página HTML criada no Dia 3.
 from app.config import WEB_PAGE_URL
 
-# Importa a configuração de logger do projeto.
+# Importa o logger do projeto.
 from app.logger_config import configurar_logger
 
 
-# Cria o logger deste arquivo.
+# Cria o logger para registrar eventos deste arquivo.
 logger = configurar_logger()
 
 
@@ -27,102 +31,122 @@ def iniciar_navegador():
     # Registra no log que o navegador será iniciado.
     logger.info("Iniciando navegador Chrome.")
 
-    # Cria as opções de configuração do navegador Chrome.
+    # Cria um objeto de opções do Chrome.
     options = webdriver.ChromeOptions()
 
-    # Maximiza a janela do navegador ao abrir.
+    # Abre o navegador maximizado.
     options.add_argument("--start-maximized")
 
-    # Cria o serviço do ChromeDriver.
-    # O ChromeDriverManager().install() baixa ou localiza o driver compatível.
+    # Cria o serviço do ChromeDriver usando o WebDriver Manager.
     service = Service(ChromeDriverManager().install())
 
-    # Cria o navegador controlado pelo Selenium.
+    # Cria o driver do Chrome.
+    # O driver é o objeto que controla o navegador.
     driver = webdriver.Chrome(service=service, options=options)
 
-    # Retorna o navegador para ser usado em outras funções.
+    # Retorna o navegador aberto para outras funções usarem.
     return driver
 
 
-def consultar_registro(codigo: str):
-    # Inicia o navegador.
+def abrir_pagina(driver):
+    # Registra no log qual página será aberta.
+    logger.info(f"Abrindo página local: {WEB_PAGE_URL}")
+
+    # Abre a página HTML local.
+    driver.get(WEB_PAGE_URL)
+
+    # Aguarda a página carregar.
+    time.sleep(1)
+
+
+def consultar_registro_com_driver(driver, codigo: str):
+    # Registra no log qual código será consultado.
+    logger.info(f"Iniciando consulta do código: {codigo}")
+
+    # Localiza o campo de código pelo ID "codigo".
+    campo_codigo = driver.find_element(By.ID, "codigo")
+
+    # Limpa o campo antes de digitar o próximo código.
+    campo_codigo.clear()
+
+    # Digita o código no campo da página.
+    campo_codigo.send_keys(codigo)
+
+    # Localiza o botão de consulta.
+    botao_consultar = driver.find_element(By.CSS_SELECTOR, "button")
+
+    # Clica no botão.
+    botao_consultar.click()
+
+    # Aguarda o resultado aparecer na tela.
+    time.sleep(0.5)
+
+    # Localiza o campo de nome pelo ID "nome".
+    campo_nome = driver.find_element(By.ID, "nome")
+
+    # Localiza o campo de status pelo ID "status".
+    campo_status = driver.find_element(By.ID, "status")
+
+    # Localiza o campo de mensagem pelo ID "mensagem".
+    campo_mensagem = driver.find_element(By.ID, "mensagem")
+
+    # Pega o texto do nome exibido na tela.
+    nome = campo_nome.text
+
+    # Pega o texto do status exibido na tela.
+    status = campo_status.text
+
+    # Pega o texto da mensagem exibida na tela.
+    mensagem = campo_mensagem.text
+
+    # Registra o resultado no log.
+    logger.info(
+        f"Consulta finalizada - Código: {codigo}, Nome: {nome}, Status: {status}, Mensagem: {mensagem}"
+    )
+
+    # Retorna os dados encontrados em formato de dicionário.
+    return {
+        "codigo": codigo,
+        "nome_encontrado": nome,
+        "status_encontrado": status,
+        "mensagem": mensagem
+    }
+
+
+def consultar_varios_registros(codigos):
+    # Cria uma lista vazia para guardar os resultados.
+    resultados = []
+
+    # Inicia o navegador apenas uma vez.
     driver = iniciar_navegador()
 
     try:
-        # Registra no log qual página será aberta.
-        logger.info(f"Abrindo página local: {WEB_PAGE_URL}")
+        # Abre a página local apenas uma vez.
+        abrir_pagina(driver)
 
-        # Abre a página HTML local no navegador.
-        driver.get(WEB_PAGE_URL)
+        # Percorre cada código recebido na lista.
+        for codigo in codigos:
+            # Chama a função que consulta um código usando o navegador já aberto.
+            resultado = consultar_registro_com_driver(driver, codigo)
 
-        # Aguarda 1 segundo para garantir que a página carregou.
-        time.sleep(1)
+            # Adiciona o resultado na lista de resultados.
+            resultados.append(resultado)
 
-        # Localiza o campo de código pelo ID "codigo".
-        campo_codigo = driver.find_element(By.ID, "codigo")
-
-        # Limpa o campo antes de digitar.
-        campo_codigo.clear()
-
-        # Digita o código recebido como parâmetro.
-        campo_codigo.send_keys(codigo)
-
-        # Registra no log o código digitado.
-        logger.info(f"Código digitado na página: {codigo}")
-
-        # Localiza o botão da página usando seletor CSS.
-        # Como só existe um botão na página, podemos buscar por "button".
-        botao_consultar = driver.find_element(By.CSS_SELECTOR, "button")
-
-        # Clica no botão consultar.
-        botao_consultar.click()
-
-        # Aguarda um pouco para o resultado aparecer.
-        time.sleep(1)
-
-        # Localiza o campo onde aparece o nome.
-        campo_nome = driver.find_element(By.ID, "nome")
-
-        # Localiza o campo onde aparece o status.
-        campo_status = driver.find_element(By.ID, "status")
-
-        # Localiza o campo onde aparece a mensagem.
-        campo_mensagem = driver.find_element(By.ID, "mensagem")
-
-        # Pega o texto exibido no campo de nome.
-        nome = campo_nome.text
-
-        # Pega o texto exibido no campo de status.
-        status = campo_status.text
-
-        # Pega o texto exibido no campo de mensagem.
-        mensagem = campo_mensagem.text
-
-        # Registra o resultado no log.
-        logger.info(
-            f"Resultado da consulta - Código: {codigo}, Nome: {nome}, Status: {status}, Mensagem: {mensagem}"
-        )
-
-        # Retorna os dados encontrados em formato de dicionário.
-        return {
-            "codigo": codigo,
-            "nome": nome,
-            "status_encontrado": status,
-            "mensagem": mensagem
-        }
+        # Retorna a lista com todos os resultados.
+        return resultados
 
     except Exception as erro:
-        # Registra no log qualquer erro que acontecer durante a automação.
-        logger.error(f"Erro ao consultar registro {codigo}: {erro}")
+        # Registra qualquer erro que aconteça durante as consultas.
+        logger.error(f"Erro durante a consulta de vários registros: {erro}")
 
-        # Lança o erro novamente para o programa principal saber que deu problema.
+        # Lança o erro novamente para o main.py saber que algo deu errado.
         raise
 
     finally:
-        # Aguarda 2 segundos antes de fechar para você conseguir ver o resultado.
+        # Espera um pouco para você ver o último resultado na tela.
         time.sleep(2)
 
-        # Fecha o navegador.
+        # Fecha o navegador no final.
         driver.quit()
 
         # Registra no log que o navegador foi fechado.

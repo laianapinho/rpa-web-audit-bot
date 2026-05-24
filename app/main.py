@@ -10,8 +10,8 @@ from app.logger_config import configurar_logger
 # Importa a função que carrega e valida os dados da planilha.
 from app.excel_reader import carregar_dados_entrada
 
-# Importa a função que faz a consulta automática na página web.
-from app.web_automation import consultar_registro
+# Importa a função que consulta vários registros na página web.
+from app.web_automation import consultar_varios_registros
 
 
 # Cria o logger deste arquivo.
@@ -21,9 +21,9 @@ logger = configurar_logger()
 def criar_planilha_entrada():
     # Cria um dicionário com dados fictícios para a planilha.
     dados = {
-        "codigo": ["001", "002", "003", "004"],
-        "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos"],
-        "status_esperado": ["Ativo", "Inativo", "Ativo", "Pendente"]
+        "codigo": ["001", "002", "003", "004", "005"],
+        "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos", "Fernanda Rocha"],
+        "status_esperado": ["Ativo", "Inativo", "Ativo", "Pendente", "Ativo"]
     }
 
     # Converte o dicionário em um DataFrame do Pandas.
@@ -53,21 +53,27 @@ def main():
     print("\nDados carregados da planilha:")
     print(df)
 
-    # Define um código fixo para testar a automação.
-    codigo_teste = "003"
+    # Pega todos os códigos da coluna "codigo" da planilha.
+    # O astype(str) garante que os códigos sejam tratados como texto.
+    codigos = df["codigo"].astype(str).tolist()
 
-    # Mostra no terminal qual código será consultado.
-    print(f"\nConsultando código de teste: {codigo_teste}")
+    # Mostra os códigos que serão consultados.
+    print("\nCódigos que serão consultados:")
+    print(codigos)
 
-    # Chama a função do Selenium para consultar o código na página web.
-    resultado = consultar_registro(codigo_teste)
+    # Envia a lista de códigos para o Selenium consultar na página.
+    resultados = consultar_varios_registros(codigos)
 
-    # Mostra o resultado retornado pela automação.
-    print("\nResultado encontrado na página:")
-    print(f"Código: {resultado['codigo']}")
-    print(f"Nome: {resultado['nome']}")
-    print(f"Status encontrado: {resultado['status_encontrado']}")
-    print(f"Mensagem: {resultado['mensagem']}")
+    # Mostra os resultados no terminal.
+    print("\nResultados encontrados na página:")
+
+    # Percorre cada resultado da lista.
+    for resultado in resultados:
+        print("-----------------------------")
+        print(f"Código: {resultado['codigo']}")
+        print(f"Nome encontrado: {resultado['nome_encontrado']}")
+        print(f"Status encontrado: {resultado['status_encontrado']}")
+        print(f"Mensagem: {resultado['mensagem']}")
 
     # Registra no log que a execução terminou.
     logger.info("Execução finalizada.")
