@@ -13,6 +13,9 @@ from app.excel_reader import carregar_dados_entrada
 # Importa a função que consulta vários registros na página web.
 from app.web_automation import consultar_varios_registros
 
+# Importa a função que compara os dados esperados com os dados encontrados.
+from app.audit_service import comparar_resultados
+
 
 # Cria o logger deste arquivo.
 logger = configurar_logger()
@@ -21,7 +24,7 @@ logger = configurar_logger()
 def criar_planilha_entrada():
     # Cria um dicionário com dados fictícios para a planilha.
     dados = {
-        "codigo": ["001", "002", "003", "004", "005"],
+        "codigo": ["001", "002", "003", "004","999"],
         "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos", "Fernanda Rocha"],
         "status_esperado": ["Ativo", "Inativo", "Ativo", "Pendente", "Ativo"]
     }
@@ -54,26 +57,31 @@ def main():
     print(df)
 
     # Pega todos os códigos da coluna "codigo" da planilha.
-    # O astype(str) garante que os códigos sejam tratados como texto.
     codigos = df["codigo"].astype(str).tolist()
 
     # Mostra os códigos que serão consultados.
     print("\nCódigos que serão consultados:")
     print(codigos)
 
-    # Envia a lista de códigos para o Selenium consultar na página.
-    resultados = consultar_varios_registros(codigos)
+    # Consulta todos os códigos na página web.
+    resultados_web = consultar_varios_registros(codigos)
 
-    # Mostra os resultados no terminal.
-    print("\nResultados encontrados na página:")
+    # Compara os dados da planilha com os resultados encontrados no site.
+    resultados_auditoria = comparar_resultados(df, resultados_web)
 
-    # Percorre cada resultado da lista.
-    for resultado in resultados:
+    # Mostra o resultado final da auditoria no terminal.
+    print("\nResultado final da auditoria:")
+
+    # Percorre cada item da auditoria.
+    for item in resultados_auditoria:
         print("-----------------------------")
-        print(f"Código: {resultado['codigo']}")
-        print(f"Nome encontrado: {resultado['nome_encontrado']}")
-        print(f"Status encontrado: {resultado['status_encontrado']}")
-        print(f"Mensagem: {resultado['mensagem']}")
+        print(f"Código: {item['codigo']}")
+        print(f"Nome esperado: {item['nome_esperado']}")
+        print(f"Nome encontrado: {item['nome_encontrado']}")
+        print(f"Status esperado: {item['status_esperado']}")
+        print(f"Status encontrado: {item['status_encontrado']}")
+        print(f"Resultado: {item['resultado_auditoria']}")
+        print(f"Mensagem: {item['mensagem']}")
 
     # Registra no log que a execução terminou.
     logger.info("Execução finalizada.")
