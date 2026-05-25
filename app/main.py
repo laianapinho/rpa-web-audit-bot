@@ -24,9 +24,9 @@ logger = configurar_logger()
 def criar_planilha_entrada():
     # Cria um dicionário com dados fictícios para a planilha.
     dados = {
-        "codigo": ["001", "002", "003", "004","999"],
-        "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos", "Fernanda Rocha"],
-        "status_esperado": ["Ativo", "Inativo", "Ativo", "Pendente", "Ativo"]
+        "codigo": ["001", "002", "003", "004"],
+        "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos"],
+        "status_esperado": ["Ativo", "Inativo", "Ativo", "Pendente"]
     }
 
     # Converte o dicionário em um DataFrame do Pandas.
