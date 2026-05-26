@@ -1,65 +1,64 @@
-# Importa o pandas, pois vamos receber os dados da planilha como DataFrame.
+# Importa pandas para verificar valores nulos.
 import pandas as pd
 
 # Importa o logger do projeto.
 from app.logger_config import configurar_logger
 
 
-# Cria o logger deste arquivo.
+# Cria logger deste arquivo.
 logger = configurar_logger()
 
 
 def normalizar_texto(valor):
-    # Verifica se o valor está vazio ou nulo.
+    # Se o valor for nulo, retorna string vazia.
     if pd.isna(valor):
-        # Se estiver vazio, retorna uma string vazia.
         return ""
 
-    # Converte o valor para texto, remove espaços no início/fim e deixa em letras minúsculas.
+    # Converte para texto, remove espaços e deixa minúsculo.
     return str(valor).strip().lower()
 
 
 def definir_resultado_auditoria(status_esperado, status_encontrado, mensagem):
-    # Normaliza o status esperado para evitar erro por causa de espaços ou letras maiúsculas/minúsculas.
+    # Normaliza status esperado.
     esperado_normalizado = normalizar_texto(status_esperado)
 
-    # Normaliza o status encontrado.
+    # Normaliza status encontrado.
     encontrado_normalizado = normalizar_texto(status_encontrado)
 
-    # Normaliza a mensagem retornada pela página.
+    # Normaliza mensagem.
     mensagem_normalizada = normalizar_texto(mensagem)
 
-    # Se a mensagem disser que o registro não foi encontrado, classificamos como "Não encontrado".
+    # Se a mensagem indicar registro não encontrado.
     if "não encontrado" in mensagem_normalizada or "nao encontrado" in mensagem_normalizada:
         return "Não encontrado"
 
-    # Se o status esperado for igual ao status encontrado, classificamos como "Conforme".
+    # Se esperado e encontrado forem iguais.
     if esperado_normalizado == encontrado_normalizado:
         return "Conforme"
 
-    # Caso contrário, classificamos como "Não conforme".
+    # Caso contrário, há divergência.
     return "Não conforme"
 
 
 def comparar_resultados(df_entrada, resultados_web):
-    # Cria uma lista vazia para guardar os resultados finais da auditoria.
+    # Cria lista final da auditoria.
     resultados_auditoria = []
 
-    # Registra no log que a comparação começou.
+    # Registra início da comparação.
     logger.info("Iniciando comparação entre planilha e resultados da página.")
 
-    # Percorre cada linha da planilha de entrada.
+    # Percorre cada linha da planilha.
     for _, linha in df_entrada.iterrows():
-        # Pega o código da linha atual.
+        # Pega código da linha.
         codigo = str(linha["codigo"]).strip()
 
-        # Pega o nome esperado da linha atual.
+        # Pega nome esperado.
         nome_esperado = linha["nome"]
 
-        # Pega o status esperado da linha atual.
+        # Pega status esperado.
         status_esperado = linha["status_esperado"]
 
-        # Procura, na lista de resultados do Selenium, o resultado com o mesmo código.
+        # Procura resultado web com mesmo código.
         resultado_web = next(
             (
                 item for item in resultados_web
@@ -68,24 +67,28 @@ def comparar_resultados(df_entrada, resultados_web):
             None
         )
 
-        # Se não encontrar o resultado na lista, cria um resultado padrão.
+        # Se não houver resultado web.
         if resultado_web is None:
             nome_encontrado = "-"
             status_encontrado = "-"
             mensagem = "Resultado não retornado pela automação."
+            evidencia = "-"
+
+        # Se houver resultado web.
         else:
             nome_encontrado = resultado_web["nome_encontrado"]
             status_encontrado = resultado_web["status_encontrado"]
             mensagem = resultado_web["mensagem"]
+            evidencia = resultado_web.get("evidencia", "-")
 
-        # Define se o registro está conforme, não conforme ou não encontrado.
+        # Define resultado da auditoria.
         resultado_auditoria = definir_resultado_auditoria(
             status_esperado=status_esperado,
             status_encontrado=status_encontrado,
             mensagem=mensagem
         )
 
-        # Monta um dicionário com o resultado completo da auditoria.
+        # Monta item final.
         item_auditoria = {
             "codigo": codigo,
             "nome_esperado": nome_esperado,
@@ -93,20 +96,21 @@ def comparar_resultados(df_entrada, resultados_web):
             "status_esperado": status_esperado,
             "status_encontrado": status_encontrado,
             "resultado_auditoria": resultado_auditoria,
-            "mensagem": mensagem
+            "mensagem": mensagem,
+            "evidencia": evidencia
         }
 
-        # Adiciona o item na lista final.
+        # Adiciona na lista final.
         resultados_auditoria.append(item_auditoria)
 
-        # Registra no log o resultado individual.
+        # Registra no log.
         logger.info(
             f"Auditoria - Código: {codigo}, Esperado: {status_esperado}, "
             f"Encontrado: {status_encontrado}, Resultado: {resultado_auditoria}"
         )
 
-    # Registra no log que a comparação terminou.
+    # Registra fim.
     logger.info("Comparação finalizada.")
 
-    # Retorna a lista completa de auditoria.
+    # Retorna lista final.
     return resultados_auditoria

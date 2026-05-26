@@ -1,78 +1,84 @@
-# Importa o pandas, usado para criar a planilha de entrada.
+# Importa Path para criar pastas.
+from pathlib import Path
+
+# Importa pandas para criar a planilha de entrada.
 import pandas as pd
 
-# Importa o caminho da planilha de entrada definido no config.py.
+# Importa caminhos principais.
 from app.config import INPUT_FILE
 
-# Importa a função que configura os logs do projeto.
+# Importa logger.
 from app.logger_config import configurar_logger
 
-# Importa a função que carrega e valida os dados da planilha.
+# Importa leitura e validação da planilha.
 from app.excel_reader import carregar_dados_entrada
 
-# Importa a função que consulta vários registros na página web.
-from app.web_automation import consultar_varios_registros
+# Importa automação com BotCity.
+from app.botcity_automation import consultar_varios_registros_botcity
 
-# Importa a função que compara os dados esperados com os dados encontrados.
+# Importa comparação de auditoria.
 from app.audit_service import comparar_resultados
 
 
-# Cria o logger deste arquivo.
+# Cria logger deste arquivo.
 logger = configurar_logger()
 
 
 def criar_planilha_entrada():
-    # Cria um dicionário com dados fictícios para a planilha.
+    # Garante que a pasta da planilha existe.
+    Path(INPUT_FILE).parent.mkdir(parents=True, exist_ok=True)
+
+    # Cria dados fictícios.
     dados = {
-        "codigo": ["001", "002", "003", "004"],
-        "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos"],
-        "status_esperado": ["Ativo", "Inativo", "Ativo", "Pendente"]
+        "codigo": ["001", "002", "003", "004", "999"],
+        "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos", "Registro Fantasma"],
+        "status_esperado": ["Ativo", "Inativo", "Inativo", "Pendente", "Ativo"]
     }
 
-    # Converte o dicionário em um DataFrame do Pandas.
+    # Converte para DataFrame.
     df = pd.DataFrame(dados)
 
-    # Salva o DataFrame em um arquivo Excel.
+    # Salva em Excel.
     df.to_excel(INPUT_FILE, index=False)
 
-    # Registra no log que a planilha foi criada.
+    # Registra no log.
     logger.info("Planilha de entrada criada com sucesso.")
 
-    # Mostra no terminal o local onde a planilha foi criada.
+    # Mostra no terminal.
     print(f"Planilha criada em: {INPUT_FILE}")
 
 
 def main():
-    # Registra no log o início da aplicação.
-    logger.info("Iniciando o projeto RPA Web Audit Bot.")
+    # Registra início.
+    logger.info("Iniciando RPA Web Audit Bot com BotCity.")
 
-    # Cria a planilha de entrada com dados fictícios.
+    # Cria a planilha.
     criar_planilha_entrada()
 
-    # Carrega e valida os dados da planilha.
+    # Carrega e valida a planilha.
     df = carregar_dados_entrada()
 
-    # Mostra no terminal os dados carregados.
+    # Mostra dados.
     print("\nDados carregados da planilha:")
     print(df)
 
-    # Pega todos os códigos da coluna "codigo" da planilha.
+    # Pega códigos da planilha.
     codigos = df["codigo"].astype(str).tolist()
 
-    # Mostra os códigos que serão consultados.
+    # Mostra códigos.
     print("\nCódigos que serão consultados:")
     print(codigos)
 
-    # Consulta todos os códigos na página web.
-    resultados_web = consultar_varios_registros(codigos)
+    # Consulta todos os códigos com BotCity.
+    resultados_web = consultar_varios_registros_botcity(codigos)
 
-    # Compara os dados da planilha com os resultados encontrados no site.
+    # Compara planilha com resultados encontrados.
     resultados_auditoria = comparar_resultados(df, resultados_web)
 
-    # Mostra o resultado final da auditoria no terminal.
+    # Mostra resultado final.
     print("\nResultado final da auditoria:")
 
-    # Percorre cada item da auditoria.
+    # Percorre cada item.
     for item in resultados_auditoria:
         print("-----------------------------")
         print(f"Código: {item['codigo']}")
@@ -82,12 +88,12 @@ def main():
         print(f"Status encontrado: {item['status_encontrado']}")
         print(f"Resultado: {item['resultado_auditoria']}")
         print(f"Mensagem: {item['mensagem']}")
+        print(f"Evidência: {item['evidencia']}")
 
-    # Registra no log que a execução terminou.
+    # Registra fim.
     logger.info("Execução finalizada.")
 
 
-# Verifica se este arquivo está sendo executado diretamente.
+# Executa a função principal.
 if __name__ == "__main__":
-    # Chama a função principal do projeto.
     main()
