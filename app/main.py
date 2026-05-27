@@ -19,6 +19,12 @@ from app.botcity_automation import consultar_varios_registros_botcity
 # Importa comparação de auditoria.
 from app.audit_service import comparar_resultados
 
+# Importa geração do relatório Excel.
+from app.report_service import gerar_relatorio_excel
+
+import os
+
+from pathlib import Path
 
 # Cria logger deste arquivo.
 logger = configurar_logger()
@@ -29,6 +35,8 @@ def criar_planilha_entrada():
     Path(INPUT_FILE).parent.mkdir(parents=True, exist_ok=True)
 
     # Cria dados fictícios.
+    # O código 003 está com status esperado diferente do site para testar "Não conforme".
+    # O código 999 não existe no HTML para testar "Não encontrado".
     dados = {
         "codigo": ["001", "002", "003", "004", "999"],
         "nome": ["Ana Silva", "João Souza", "Maria Lima", "Carlos Santos", "Registro Fantasma"],
@@ -90,7 +98,16 @@ def main():
         print(f"Mensagem: {item['mensagem']}")
         print(f"Evidência: {item['evidencia']}")
 
-    # Registra fim.
+    caminho_relatorio = gerar_relatorio_excel(resultados_auditoria)
+
+    # Converte o caminho do relatório para caminho absoluto.
+    caminho_relatorio_absoluto = Path(caminho_relatorio).resolve()
+
+    print(f"\nRelatório Excel gerado em: {caminho_relatorio_absoluto}")
+
+    # Abre o relatório automaticamente no Windows.
+    os.startfile(caminho_relatorio_absoluto)
+
     logger.info("Execução finalizada.")
 
 
