@@ -34,7 +34,8 @@ def criar_dataframe_auditoria(resultados_auditoria):
         "status_encontrado",
         "resultado_auditoria",
         "mensagem",
-        "evidencia"
+        "evidencia",
+        "erro"
     ]
 
     # Reorganiza o DataFrame seguindo a ordem definida.
@@ -72,6 +73,10 @@ def criar_dataframe_resumo(df_auditoria):
     total_nao_encontrado = len(
         df_auditoria[df_auditoria["resultado_auditoria"] == "Não encontrado"]
     )
+
+    total_erro = len(
+    df_auditoria[df_auditoria["resultado_auditoria"] == "Erro"]
+    )
         
     # Cria uma tabela de resumo.
     dados_resumo = {
@@ -79,19 +84,22 @@ def criar_dataframe_resumo(df_auditoria):
             "Total de registros",
             "Total conforme",
             "Total não conforme",
-            "Total não encontrado"
+            "Total não encontrado",
+            "Total erro"
         ],
         "valor": [
             total_registros,
             total_conforme,
             total_nao_conforme,
-            total_nao_encontrado
+            total_nao_encontrado,
+            total_erro
         ],
         "percentual": [
             "100%",
             calcular_percentual(total_conforme, total_registros),
             calcular_percentual(total_nao_conforme, total_registros),
-            calcular_percentual(total_nao_encontrado, total_registros)
+            calcular_percentual(total_nao_encontrado, total_registros),
+            calcular_percentual(total_erro, total_registros),
         ]
     }
 
@@ -162,6 +170,7 @@ def formatar_resultados_auditoria(worksheet):
     cor_conforme = PatternFill(fill_type="solid", fgColor="C6EFCE")
     cor_nao_conforme = PatternFill(fill_type="solid", fgColor="FFC7CE")
     cor_nao_encontrado = PatternFill(fill_type="solid", fgColor="FFEB9C")
+    cor_erro = PatternFill(fill_type="solid", fgColor="D9EAD3")
 
     # Identifica a coluna resultado_auditoria.
     coluna_resultado = None
@@ -196,6 +205,9 @@ def formatar_resultados_auditoria(worksheet):
 
         elif valor == "Não encontrado":
             celula_resultado.fill = cor_nao_encontrado
+
+        elif valor == "Erro":
+            celula_resultado.fill = cor_erro
 
         # Centraliza o texto da célula.
         celula_resultado.alignment = Alignment(horizontal="center")

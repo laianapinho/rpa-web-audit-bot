@@ -32,7 +32,6 @@ def iniciar_botcity_webbot():
     bot.headless = False
 
     # Define o caminho do ChromeDriver.
-    # O webdriver-manager baixa/localiza automaticamente.
     bot.driver_path = ChromeDriverManager().install()
 
     # Retorna o bot configurado.
@@ -68,6 +67,35 @@ def salvar_evidencia(bot: WebBot, codigo: str):
 
     # Retorna o caminho da evidência como texto.
     return str(caminho_evidencia)
+
+
+def salvar_evidencia_erro(bot: WebBot, codigo: str):
+    # Garante que a pasta de evidências existe.
+    Path(EVIDENCE_DIR).mkdir(parents=True, exist_ok=True)
+
+    # Monta o nome da evidência de erro.
+    caminho_evidencia = Path(EVIDENCE_DIR) / f"erro_{codigo}.png"
+
+    # Tenta salvar print da tela atual.
+    try:
+        # Acessa o driver interno do BotCity.
+        driver = bot.driver
+
+        # Salva o print da tela.
+        driver.save_screenshot(str(caminho_evidencia))
+
+        # Registra no log.
+        logger.info(f"Evidência de erro salva: {caminho_evidencia}")
+
+        # Retorna o caminho da evidência.
+        return str(caminho_evidencia)
+
+    except Exception as erro:
+        # Se nem a evidência de erro conseguir ser salva, registra no log.
+        logger.error(f"Não foi possível salvar evidência de erro do código {codigo}: {erro}")
+
+        # Retorna traço para não quebrar o relatório.
+        return "-"
 
 
 def consultar_registro_com_bot(bot: WebBot, codigo: str):
@@ -113,13 +141,29 @@ def consultar_registro_com_bot(bot: WebBot, codigo: str):
         "nome_encontrado": nome,
         "status_encontrado": status,
         "mensagem": mensagem,
-        "evidencia": evidencia
+        "evidencia": evidencia,
+        "erro": ""
     }
 
     # Registra resultado.
     logger.info(f"Resultado BotCity: {resultado}")
 
     # Retorna resultado.
+    return resultado
+
+
+def montar_resultado_erro(codigo: str, mensagem_erro: str, evidencia: str):
+    # Monta um resultado padrão para quando uma consulta falha.
+    resultado = {
+        "codigo": codigo,
+        "nome_encontrado": "-",
+        "status_encontrado": "-",
+        "mensagem": "Erro durante a consulta.",
+        "evidencia": evidencia,
+        "erro": mensagem_erro
+    }
+
+    # Retorna o resultado de erro.
     return resultado
 
 
@@ -136,20 +180,45 @@ def consultar_varios_registros_botcity(codigos):
 
         # Percorre cada código da planilha.
         for codigo in codigos:
-            # Consulta o código atual.
-            resultado = consultar_registro_com_bot(bot, codigo)
+            # Cada código agora tem seu próprio try/except.
+            try:
+                # Consulta o código atual.
+                resultado = consultar_registro_com_bot(bot, codigo)
 
-            # Adiciona o resultado na lista.
-            resultados.append(resultado)
+                # Adiciona o resultado na lista.
+                resultados.append(resultado)
+
+            except Exception as erro:
+                # Registra o erro específico daquele código.
+                logger.error(f"Erro ao consultar o código {codigo}: {erro}")
+
+                # Salva uma evidência da tela no momento do erro.
+                evidencia_erro = salvar_evidencia_erro(bot, codigo)
+
+                # Monta um resultado de erro para não parar a execução.
+                resultado_erro = montar_resultado_erro(
+                    codigo=codigo,
+                    mensagem_erro=str(erro),
+                    evidencia=evidencia_erro
+                )
+
+                # Adiciona o erro na lista como se fosse uma linha normal.
+                resultados.append(resultado_erro)
+
+                # Tenta reabrir a página para continuar a próxima consulta.
+                try:
+                    abrir_pagina(bot)
+                except Exception as erro_reabertura:
+                    logger.error(f"Erro ao reabrir página após falha no código {codigo}: {erro_reabertura}")
 
         # Retorna todos os resultados.
         return resultados
 
     except Exception as erro:
-        # Registra erro.
-        logger.error(f"Erro durante consultas com BotCity: {erro}")
+        # Esse erro é geral, por exemplo, se o navegador nem abrir.
+        logger.error(f"Erro geral durante consultas com BotCity: {erro}")
 
-        # Relança erro.
+        # Relança erro geral.
         raise
 
     finally:

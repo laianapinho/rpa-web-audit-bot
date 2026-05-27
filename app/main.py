@@ -97,6 +97,7 @@ def main():
         print(f"Resultado: {item['resultado_auditoria']}")
         print(f"Mensagem: {item['mensagem']}")
         print(f"Evidência: {item['evidencia']}")
+        print(f"Erro técnico: {item['erro']}")
 
     caminho_relatorio = gerar_relatorio_excel(resultados_auditoria)
 
