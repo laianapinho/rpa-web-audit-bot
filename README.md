@@ -262,4 +262,4 @@ Durante o desenvolvimento deste projeto foram aplicados conceitos de:
 
 ## Autor
 
-Desenvolvido por Mateus como projeto de portfólio em automação RPA com Python e BotCity.
+Desenvolvido por Laiana como projeto de portfólio em automação RPA com Python e BotCity.
